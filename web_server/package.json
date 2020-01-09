@@ -1,0 +1,23 @@
+{
+  "name": "web_server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "keywords": [],
+  "author": "mvidaldp",
+  "license": "MIT",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Devrim-Celik/closed_loops_hackathon.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Devrim-Celik/closed_loops_hackathon/issues"
+  },
+  "homepage": "https://github.com/Devrim-Celik/closed_loops_hackathon#readme",
+  "description": "",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
