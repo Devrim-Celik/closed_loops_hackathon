@@ -155,7 +155,30 @@ class QuarterSuspensionModel():
             sprung = ax.add_patch(patches.Rectangle((ts - sprung_width/2, self.sol[i,0] + 2 + unsprung_height + 2 - sprung_height/2), 
                 width = sprung_width, height = sprung_height, linewidth = 2, edgecolor = 'black', facecolor = 'blue'))
             sprung_txt = ax.text(ts, self.sol[i,0] + 2 + unsprung_height + 2,"$m1$")
+            #TODO
+            # coil1
+            """
+            coil1_1
+            coil1_2
+            coil1_3
+            coil1_4
+            coil1_5
+            coil1_6
+            coil1_7
+            coil1_8
+            """
 
+            #damping
+            """
+            damper1_1
+            damper1_2
+            damper1_3
+            damper1_4
+            damper1_5
+            damper1_6
+            damper1_7
+            damper1_8
+            """
             draw_objects.append([tm, point, unsprung, sprung, unsprung_txt, sprung_txt])
 
         ax.set_ylim([0, 10])
@@ -169,7 +192,7 @@ class QuarterSuspensionModel():
         Writer = animation.writers['ffmpeg']
         writer = Writer(fps=1, metadata=dict(artist='Devrim Celik'), bitrate=1800)
 
-        ani.save(self.image_folder + '/' + self.file_name + '.mp4', writer='writer')
+        #ani.save(self.image_folder + '/' + self.file_name + '.mp4', writer='writer')
 
         plt.show()
 if __name__=="__main__":
