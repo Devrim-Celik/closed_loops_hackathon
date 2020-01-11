@@ -9,6 +9,7 @@ import time as time_module
 from multiprocessing.pool import Pool
 import multiprocessing
 from functools import partial
+import ctypes
 
 cores = multiprocessing.cpu_count()
 
@@ -178,7 +179,9 @@ def generate_windows(df, vel, fn, w_length=2.5, slide_step=1, dt=0.005, K=3, I_l
 
         # for errors and boundary values of different currents
         # candidate initial states so we can take over the ODE
-        errors = [0] * len(I)
+        errors_array = multiprocessing.Array(ctypes.c_float, [0] * len(I))
+        errors = np.ctypeslib.as_array(errors_array.get_obj())
+        # errors = errors.reshape(1, 3)
         boundaries = [False] * len(I)
         candidate_init_states = [None] * len(I)
 
