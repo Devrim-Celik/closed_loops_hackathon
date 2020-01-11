@@ -182,11 +182,11 @@ def generate_windows(df, vel, fn, w_length=2.5, slide_step=1, dt=0.005, K=3, I_l
         # for errors and boundary values of different currents
         # candidate initial states so we can take over the ODE
         # errors = [0] * len(I)
-        errors = multiprocessing.Array('f', len(I))
+        errors = multiprocessing.Array('f', len(I), lock=False)
         # boundaries = [False] * len(I)
-        boundaries = multiprocessing.Array('b', len(I))
+        boundaries = multiprocessing.Array('b', len(I), lock=False)
         # candidate_init_states = [None] * len(I)
-        candidate_init_states = multiprocessing.Array('d', len(I))
+        candidate_init_states = multiprocessing.Array('d', len(I), lock=False)
 
         # now go though every current and check which one is the fittest
         # for indx_i, i in enumerate(I):
