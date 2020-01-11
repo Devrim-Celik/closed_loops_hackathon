@@ -25,6 +25,7 @@ velocities = [i for i in range(5, 31)]  # loop over all velocities
 def thread_job(iter):
     fname = iter[0]
     vel = iter[1]
+    print('… velocity', vel)
     time, profile = time_and_profile(profileLocation + fname, vel)
     with open(profileLocation + "preproc2/" + fname[:-4] + "_" + str(vel) + ".csv", mode='w') as file:
         writer = csv.writer(file, delimiter=',')
@@ -36,17 +37,10 @@ for dataset in datasets:
     print('\n%% Processing dataset', dataset)
     fname = profileLocation + dataset
     start = time_module.time()
-    for vel in range(5, 31):  # loop over all velocities
-        print('… velocity', vel)
-        time, profile = time_and_profile(fname, vel)
-        with open(profileLocation + "preproc/" + dataset[:-4] + "_vel_" + str(vel) + ".csv", mode='w') as file:
-            writer = csv.writer(file, delimiter=',')
-            for p in profile:
-                writer.writerow([p])
-    print(f'Took {time_module.time()-start:.3f} seconds to process dataset.')
     threads = list()
     iterable = [(dataset, vel) for vel in velocities]
-    with Pool(processes=cores-2) as pool:
-        pool.map(thread_job, iterable)  # vel is the iterable parameter
-        # pool.close()
-        # pool.join()
+    pool = Pool(processes=cores - 2)
+    pool.map(thread_job, iterable)  # vel is the iterable parameter
+    pool.close()
+    print(f'Took {time_module.time() - start:.3f} seconds to process dataset.')
+    # pool.join() # wait until all jobs are finished to finish the pool of jobs
