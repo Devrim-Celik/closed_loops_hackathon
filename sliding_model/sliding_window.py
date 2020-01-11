@@ -178,7 +178,7 @@ def generate_windows(df, vel, fn, w_length=2.5, slide_step=1, dt=0.005, K=3, I_l
         # for errors and boundary values of different currents
         # candidate initial states so we can take over the ODE
         # errors = [0] * len(I)
-        errors = multiprocessing.Array('d', len(I))
+        errors = multiprocessing.Array('f', len(I))
         # boundaries = [False] * len(I)
         boundaries = multiprocessing.Array('b', len(I))
         # candidate_init_states = [None] * len(I)
