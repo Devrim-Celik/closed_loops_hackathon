@@ -115,7 +115,9 @@ def check_fittest(w, n, optimal_I, df, dt, slide_step, candidate_init_states, in
     # here we calculate error and boundary
     errors[indx_i] = error_function(Zb_dtdt_list, dt, K=K)
     boundaries[indx_i] = boundary_function(Zb_dtdt_list)
-
+    print(indx_i)
+    print(error_function(Zb_dtdt_list, dt, K=K))
+    print(boundary_function(Zb_dtdt_list))
 
 def generate_windows(df, vel, fn, w_length=2.5, slide_step=1, dt=0.005, K=3, I_levels=9):
     # TODO did not implement for higher slide_step than 1
