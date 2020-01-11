@@ -8,6 +8,7 @@ from scipy import signal
 import time as time_module
 from multiprocessing.pool import Pool
 import multiprocessing
+from functools import partial
 
 cores = multiprocessing.cpu_count()
 
@@ -70,9 +71,11 @@ def boundary_function(Zt_dtdt, Mb=500, Mt=50):
         return True
 
 
-def check_fittest(indx_i, i, w, n, optimal_I, df, dt, slide_step, candidate_init_states, initial_state, K, errors, boundaries):
+def check_fittest(iter, w, n, optimal_I, df, dt, slide_step, candidate_init_states, initial_state, K, errors, boundaries):
     # for each current we reset those lists; they used to calculate
     # loss and boundary condition
+    indx_i = iter[0]
+    i = iter[1]
     Zb_dtdt_list = []
     Zt_dtdt_list = []
     # here you take steps through the window
@@ -186,14 +189,14 @@ def generate_windows(df, vel, fn, w_length=2.5, slide_step=1, dt=0.005, K=3, I_l
 
         # now go though every current and check which one is the fittest
         # for indx_i, i in enumerate(I):
-        # iterable = [(indx, i) for indx, i in enumerate(I)]
+        iterable = [(indx, i) for indx, i in enumerate(I)]
         start = time_module.time()
-        # pool = Pool(processes=cores - 1)
-        for indx, i in enumerate(I):
-            job = multiprocessing.Process(target=check_fittest, args=(
-            indx, i, w, n, optimal_I, df, dt, slide_step, candidate_init_states, initial_state, K, errors, boundaries))
-            job.start()
-            job.join()  # wait until all jobs are finished to finish the pool of jobs
+        job = partial(check_fittest, w, n, optimal_I, df, dt, slide_step, candidate_init_states, initial_state, K,
+                       errors, boundaries)
+        pool = Pool(processes=cores - 1)
+        pool.map(job, iterable)
+        pool.close()
+        pool.join()  # wait until all jobs are finished to finish the pool of jobs
         print('Took {:.3f} seconds to process window.'.format(time_module.time() - start))
 
         print(errors)
