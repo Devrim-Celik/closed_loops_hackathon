@@ -37,7 +37,7 @@ def calc_target(ind, profile, K):
         Zh, Zh_dt = profile[0], 0.
         for n in range(0, N-1):
             # Produce current from neural network
-            i = 1.#ind(np.array([x[n][0], x[n][1], x[n][2], x[n][3], x[n][4], x[n][5], Zh, Zh_dt]))
+            i = ind(np.array([x[n][0], x[n][1], x[n][2], x[n][3], x[n][4], x[n][5], Zh, Zh_dt]))
             # Compute future state of the system with differential equation
             ode = ODE(x[n][0], x[n][1], x[n][2], x[n][3], Zh, Zh_dt, i, dt)
             # Set the next state

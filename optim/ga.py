@@ -12,7 +12,7 @@ def select_mating_pool(population, fitnesses, n_parents):
     for i in range(n_parents):
         max_fitness_idx = np.where(fitnesses==np.min(fitnesses))[0][0]
         parents[i, :] = population[max_fitness_idx, :]
-        fitnesses[max_fitness_idx] = -99999999999
+        fitnesses[max_fitness_idx] = 99999999999
     return parents
 
 def crossover(parents, offspring_size):
@@ -34,7 +34,7 @@ def mutate(offspring, mutation_rate):
     num_mutations = np.uint32(mutation_rate * offspring.shape[1])
     # Mutation changes a single gene in each offspring randomly.
     for i in range(offspring.shape[0]):
-        mutation_idx = np.array(random.sample(range(0, offspring.shape[1]), num_mutations))
-        # Add random value to the individual.
+        mutation_idx = np.random.choice(np.arange(offspring.shape[1]), num_mutations)
+        # Add random value to the individual
         offspring[i, mutation_idx] += np.random.uniform(-1.0, 1.0, 1)
     return offspring
