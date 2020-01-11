@@ -196,6 +196,7 @@ def generate_windows(df, vel, fn, w_length=2.5, slide_step=1, dt=0.005, K=3, I_l
         pool = Pool(processes=cores - 1)
         pool.map(job, iterable)  # vel is the iterable parameter
         pool.close()
+        pool.join()
         print('Took {:.3f} seconds to process window.'.format(time_module.time() - start))
 
         print(errors)
