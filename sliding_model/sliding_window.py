@@ -67,6 +67,53 @@ def boundary_function(Zt_dtdt, Mb = 500, Mt = 50):
     else:
         return True
 
+def check_fittest(iter):
+    # for each current we reset those lists; they used to calculate
+    # loss and boundary condition
+    indx_i = iter[0]
+    i = iter[1]
+    Zb_dtdt_list = []
+    Zt_dtdt_list = []
+    # here you take steps through the window
+    for indx_within in range(w, w + n):
+	# if Best_I already is asigned (i.e. edge value), use this
+	# value instead of the candidate i
+        if optimal_I[indx_within] != -1:
+            used_i = optimal_I[indx_within]
+        else:
+            used_i = i
+	#print(used_i)
+	# if this is the very first first step, ts2_k_20.0.csvuse 0 as Zh_dt
+        if w == 0 and indx_within == 0:
+            Zh_dt = 0
+	# otherwise calculate it
+        else:
+            Zh_dt = (df['profile'].iloc[indx_within]-df['profile'].iloc[indx_within-1])/dt
+
+
+	# if this is the first step of a window, use initial_state
+        if indx_within == w:
+            x = ODE(*initial_state, df['profile'].iloc[indx_within], Zh_dt,
+            used_i, dt)
+	# otherwise the previous one
+        else:
+            x = ODE(*x[:4], df['profile'].iloc[indx_within], Zh_dt, used_i, dt)
+
+	# from one of the candidate currents, we will need one
+	# paricular state as the initial state for the next window
+	# if the window indx is (slide_step-1) away from the start
+	# of the window, the resulting state will be saved
+        if indx_within == w + (slide_step-1):
+            candidate_init_states[indx_i] = x[:4]
+
+	# append those for later error calculations
+        Zb_dtdt_list.append(x[4])
+        Zt_dtdt_list.append(x[5])
+    # here we calculate error and boundary
+    errors[indx_i] = error_function(Zb_dtdt_list, dt, K=K)
+    boundaries[indx_i] = boundary_function(Zb_dtdt_list)
+
+
 def generate_windows(df, vel, fn, w_length=2.5, slide_step=1, dt=0.005, K=3, I_levels=9):
     #TODO did not implement for higher slide_step than 1
     """
@@ -131,62 +178,17 @@ def generate_windows(df, vel, fn, w_length=2.5, slide_step=1, dt=0.005, K=3, I_l
         candidate_init_states = [None]*len(I)
 
         # pool.join() # wait until all jobs are finished to finish the pool of jobs
-        def check_fittest(iter):
-            # for each current we reset those lists; they used to calculate
-            # loss and boundary condition
-            indx_i = iter[0]
-            i = iter[1]
-            Zb_dtdt_list = []
-            Zt_dtdt_list = []
-            # here you take steps through the window
-            for indx_within in range(w, w + n):
-                # if Best_I already is asigned (i.e. edge value), use this
-                # value instead of the candidate i
-                if optimal_I[indx_within] != -1:
-                    used_i = optimal_I[indx_within]
-                else:
-                    used_i = i
-                #print(used_i)
-                # if this is the very first first step, ts2_k_20.0.csvuse 0 as Zh_dt
-                if w == 0 and indx_within == 0:
-                    Zh_dt = 0
-                # otherwise calculate it
-                else:
-                    Zh_dt = (df['profile'].iloc[indx_within]-df['profile'].iloc[indx_within-1])/dt
+	# now go though every current and check which one is the fittest
+	# for indx_i, i in enumerate(I):
+        iterable = [(indx, i) for indx, i in enumerate(I)]
+        print(iterable)
+        print('\n%%Current window: ', w)
+        start = time_module.time()
+        pool = Pool(processes=cores - 1)
+        pool.map(check_fittest, iterable)  # vel is the iterable parameter
+        pool.close()
+        print('Took {:.3f} seconds to process window.'.format(time_module.time() - start))
 
-
-                # if this is the first step of a window, use initial_state
-                if indx_within == w:
-                    x = ODE(*initial_state, df['profile'].iloc[indx_within], Zh_dt,
-                        used_i, dt)
-                # otherwise the previous one
-                else:
-                    x = ODE(*x[:4], df['profile'].iloc[indx_within], Zh_dt, used_i, dt)
-
-                # from one of the candidate currents, we will need one
-                # paricular state as the initial state for the next window
-                # if the window indx is (slide_step-1) away from the start
-                # of the window, the resulting state will be saved
-                if indx_within == w + (slide_step-1):
-                    candidate_init_states[indx_i] = x[:4]
-
-                # append those for later error calculations
-                Zb_dtdt_list.append(x[4])
-                Zt_dtdt_list.append(x[5])
-
-            # now go though every current and check which one is the fittest
-            # for indx_i, i in enumerate(I):
-            iterable = [(indx, i) for indx, i in enumerate(I)]
-            print('\n%%Current window: ', w)
-            start = time_module.time()
-            pool = Pool(processes=cores - 1)
-            pool.map(check_fittest, iterable)  # vel is the iterable parameter
-            pool.close()
-            print('Took {:.3f} seconds to process window.'.format(time_module.time() - start))
-
-            # here we calculate error and boundary
-            errors[indx_i] = error_function(Zb_dtdt_list, dt, K=K)
-            boundaries[indx_i] = boundary_function(Zb_dtdt_list)
 
         print(errors)
         print(boundaries)
