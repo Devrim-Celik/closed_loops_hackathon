@@ -97,6 +97,7 @@ def check_fittest(w, n, optimal_I, df, dt, slide_step, candidate_init_states, in
 
         # if this is the first step of a window, use initial_state
         if indx_within == w:
+            print(initial_state)
             x = ODE(*initial_state, df['profile'].iloc[indx_within], Zh_dt, used_i, dt)
         # otherwise the previous one
         else:
