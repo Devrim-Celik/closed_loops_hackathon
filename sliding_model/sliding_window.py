@@ -71,7 +71,8 @@ def boundary_function(Zt_dtdt, Mb=500, Mt=50):
         return True
 
 
-def check_fittest(iter, w, n, optimal_I, df, dt, slide_step, candidate_init_states, initial_state, K, errors, boundaries):
+def check_fittest(w, n, optimal_I, df, dt, slide_step, candidate_init_states, initial_state, K, errors, boundaries,
+                  iter):
     # for each current we reset those lists; they used to calculate
     # loss and boundary condition
     indx_i = iter[0]
@@ -192,7 +193,7 @@ def generate_windows(df, vel, fn, w_length=2.5, slide_step=1, dt=0.005, K=3, I_l
         iterable = [(indx, i) for indx, i in enumerate(I)]
         start = time_module.time()
         job = partial(check_fittest, w, n, optimal_I, df, dt, slide_step, candidate_init_states, initial_state, K,
-                       errors, boundaries)
+                      errors, boundaries)
         pool = Pool(processes=cores - 1)
         pool.map(job, iterable)
         pool.close()
