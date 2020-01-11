@@ -44,3 +44,6 @@ def time_and_profile(fname, vel):
     profile = np.interp(trip, tripRecording, ZH)
 
     return time, profile
+
+def new_population():
+    pass
