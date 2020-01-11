@@ -5,6 +5,12 @@ from auxiliary import *
 from ode import ODE
 from scipy import signal
 
+import time as time_module
+from multiprocessing.pool import Pool
+import multiprocessing
+
+cores = multiprocessing.cpu_count()
+
 def butter_bandpass(lowcut, highcut, fs, order):
     nyq = 0.5 * fs
     low = lowcut / nyq
@@ -118,16 +124,28 @@ def generate_windows(df, vel, fn, w_length=2.5, slide_step=1, dt=0.005, K=3, I_l
     for w in range(0, N-2*k, slide_step):
         print("[*] Window [{:7d}] of [{:7d}].".format(w, int((N-2*k)/slide_step)))
 
-        # for erros and boundary values of different currents
+        # for errors and boundary values of different currents
         # candidate initial states so we can take over the ODE
         errors = [0]*len(I)
         boundaries = [False]*len(I)
         candidate_init_states = [None]*len(I)
 
         # now go though every current and check which one is the fittest
-        for indx_i, i in enumerate(I):
+        # for indx_i, i in enumerate(I):
+        iterable = [(indx, i) for indx, i in enumerate(I)]
+        print('\n%%Current window: ', w)
+        start = time_module.time()
+        pool = Pool(processes=cores - 1)
+        pool.map(check_fittest, iterable)  # vel is the iterable parameter
+        pool.close()
+        print(f'Took {time_module.time() - start:.3f} seconds to process window.')
+
+        # pool.join() # wait until all jobs are finished to finish the pool of jobs
+        def check_fittest(iter):
             # for each current we reset those lists; they used to calculate
             # loss and boundary condition
+            indx_i = iter[0]
+            i = iter[1]
             Zb_dtdt_list = []
             Zt_dtdt_list = []
             # here you take steps through the window
