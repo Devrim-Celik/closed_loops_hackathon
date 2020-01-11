@@ -97,7 +97,6 @@ def check_fittest(w, n, optimal_I, df, dt, slide_step, candidate_init_states, in
 
         # if this is the first step of a window, use initial_state
         if indx_within == w:
-            print(initial_state)
             x = ODE(*initial_state, df['profile'].iloc[indx_within], Zh_dt, used_i, dt)
         # otherwise the previous one
         else:
@@ -180,10 +179,10 @@ def generate_windows(df, vel, fn, w_length=2.5, slide_step=1, dt=0.005, K=3, I_l
 
         # for errors and boundary values of different currents
         # candidate initial states so we can take over the ODE
-        global errors
-        errors = multiprocessing.Array(ctypes.c_float, [0] * len(I))
-        errors = np.ctypeslib.as_array(errors.get_obj())
-        errors = list(errors)
+        # errors = multiprocessing.Array(ctypes.c_float, [0] * len(I))
+        # errors = np.ctypeslib.as_array(errors.get_obj())
+        # errors = list(errors)
+        errors = [0] * len(I)
         boundaries = [False] * len(I)
         candidate_init_states = [None] * len(I)
 
