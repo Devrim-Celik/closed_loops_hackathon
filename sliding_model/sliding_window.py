@@ -122,25 +122,7 @@ def generate_windows(df, vel, fn, w_length=2.5, slide_step=1, dt=0.005, K=3, I_l
 
     # w indicates the start of every window, iterating by slide_step
     for w in range(0, N-2*k, slide_step):
-        print("[*] Window [{:7d}] of [{:7d}].".format(w, int((N-2*k)/slide_step)))
 
-        # for errors and boundary values of different currents
-        # candidate initial states so we can take over the ODE
-        errors = [0]*len(I)
-        boundaries = [False]*len(I)
-        candidate_init_states = [None]*len(I)
-
-        # now go though every current and check which one is the fittest
-        # for indx_i, i in enumerate(I):
-        iterable = [(indx, i) for indx, i in enumerate(I)]
-        print('\n%%Current window: ', w)
-        start = time_module.time()
-        pool = Pool(processes=cores - 1)
-        pool.map(check_fittest, iterable)  # vel is the iterable parameter
-        pool.close()
-        print('Took {:.3f} seconds to process window.'.format(time_module.time() - start))
-
-        # pool.join() # wait until all jobs are finished to finish the pool of jobs
         def check_fittest(iter):
             # for each current we reset those lists; they used to calculate
             # loss and boundary condition
@@ -184,6 +166,25 @@ def generate_windows(df, vel, fn, w_length=2.5, slide_step=1, dt=0.005, K=3, I_l
                 Zb_dtdt_list.append(x[4])
                 Zt_dtdt_list.append(x[5])
 
+            print("[*] Window [{:7d}] of [{:7d}].".format(w, int((N - 2 * k) / slide_step)))
+
+            # for errors and boundary values of different currents
+            # candidate initial states so we can take over the ODE
+            errors = [0] * len(I)
+            boundaries = [False] * len(I)
+            candidate_init_states = [None] * len(I)
+
+            # now go though every current and check which one is the fittest
+            # for indx_i, i in enumerate(I):
+            iterable = [(indx, i) for indx, i in enumerate(I)]
+            print('\n%%Current window: ', w)
+            start = time_module.time()
+            pool = Pool(processes=cores - 1)
+            pool.map(check_fittest, iterable)  # vel is the iterable parameter
+            pool.close()
+            print('Took {:.3f} seconds to process window.'.format(time_module.time() - start))
+
+            # pool.join() # wait until all jobs are finished to finish the pool of jobs
             # here we calculate error and boundary
             errors[indx_i] = error_function(Zb_dtdt_list, dt, K=K)
             boundaries[indx_i] = boundary_function(Zb_dtdt_list)
