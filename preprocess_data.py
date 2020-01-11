@@ -37,7 +37,6 @@ for dataset in datasets:
     print('\n%% Processing dataset', dataset)
     fname = profileLocation + dataset
     start = time_module.time()
-    threads = list()
     iterable = [(dataset, vel) for vel in velocities]
     pool = Pool(processes=cores - 2)
     pool.map(thread_job, iterable)  # vel is the iterable parameter
