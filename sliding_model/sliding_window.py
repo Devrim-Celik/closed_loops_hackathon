@@ -8,8 +8,6 @@ from scipy import signal
 import time as time_module
 from multiprocessing.pool import Pool
 import multiprocessing
-from functools import partial
-import ctypes
 
 cores = multiprocessing.cpu_count()
 
@@ -72,16 +70,14 @@ def boundary_function(Zt_dtdt, Mb=500, Mt=50):
         return True
 
 
-def check_fittest(w, n, optimal_I, df, dt, slide_step, candidate_init_states, initial_state, K, errors, boundaries, iter):
+def check_fittest(indx_i, i, w, n, optimal_I, df, dt, slide_step, candidate_init_states, initial_state, K, errors, boundaries):
     # for each current we reset those lists; they used to calculate
     # loss and boundary condition
-    indx_i = iter[0]
-    i = iter[1]
     Zb_dtdt_list = []
     Zt_dtdt_list = []
     # here you take steps through the window
     for indx_within in range(w, w + n):
-        # if Best_I already is asigned (i.e. edge value), use this
+        # if Best_I already is assigned (i.e. edge value), use this
         # value instead of the candidate i
         if optimal_I[indx_within] != -1:
             used_i = optimal_I[indx_within]
@@ -103,7 +99,7 @@ def check_fittest(w, n, optimal_I, df, dt, slide_step, candidate_init_states, in
             x = ODE(*x[:4], df['profile'].iloc[indx_within], Zh_dt, used_i, dt)
 
         # from one of the candidate currents, we will need one
-        # paricular state as the initial state for the next window
+        # particular state as the initial state for the next window
         # if the window indx is (slide_step-1) away from the start
         # of the window, the resulting state will be saved
         if indx_within == w + (slide_step - 1):
@@ -112,13 +108,15 @@ def check_fittest(w, n, optimal_I, df, dt, slide_step, candidate_init_states, in
         # append those for later error calculations
         Zb_dtdt_list.append(x[4])
         Zt_dtdt_list.append(x[5])
+
     # here we calculate error and boundary
     errors[indx_i] = error_function(Zb_dtdt_list, dt, K=K)
     boundaries[indx_i] = boundary_function(Zb_dtdt_list)
-    print(indx_i)
-    print(error_function(Zb_dtdt_list, dt, K=K))
-    print(boundary_function(Zb_dtdt_list))
-    return True
+    # print(indx_i)
+    # print(error_function(Zb_dtdt_list, dt, K=K))
+    # print(boundary_function(Zb_dtdt_list))
+    # return True
+
 
 def generate_windows(df, vel, fn, w_length=2.5, slide_step=1, dt=0.005, K=3, I_levels=9):
     # TODO did not implement for higher slide_step than 1
@@ -179,35 +177,34 @@ def generate_windows(df, vel, fn, w_length=2.5, slide_step=1, dt=0.005, K=3, I_l
 
         # for errors and boundary values of different currents
         # candidate initial states so we can take over the ODE
-        # errors = multiprocessing.Array(ctypes.c_float, [0] * len(I))
-        # errors = np.ctypeslib.as_array(errors.get_obj())
-        # errors = list(errors)
-        errors = [0] * len(I)
-        boundaries = [False] * len(I)
-        candidate_init_states = [None] * len(I)
+        # errors = [0] * len(I)
+        errors = multiprocessing.Array('d', len(I))
+        # boundaries = [False] * len(I)
+        boundaries = multiprocessing.Array('b', len(I))
+        # candidate_init_states = [None] * len(I)
+        candidate_init_states = multiprocessing.Array('d', len(I))
 
-        # pool.join() # wait until all jobs are finished to finish the pool of jobs
         # now go though every current and check which one is the fittest
         # for indx_i, i in enumerate(I):
-        iterable = [(indx, i) for indx, i in enumerate(I)]
-        print(iterable)
-        print('\n%%Current window: ', w)
+        # iterable = [(indx, i) for indx, i in enumerate(I)]
         start = time_module.time()
-        job = partial(check_fittest, w, n, optimal_I, df, dt, slide_step, candidate_init_states, initial_state, K, errors, boundaries)
-        pool = Pool(processes=cores - 1)
-        pool.map(job, iterable)  # vel is the iterable parameter
-        pool.close()
-        pool.join()
+        # pool = Pool(processes=cores - 1)
+        for indx, i in enumerate(I):
+            job = multiprocessing.Process(target=check_fittest, args=(
+            indx, i, w, n, optimal_I, df, dt, slide_step, candidate_init_states, initial_state, K, errors, boundaries))
+            job.start()
+            job.join()  # wait until all jobs are finished to finish the pool of jobs
         print('Took {:.3f} seconds to process window.'.format(time_module.time() - start))
 
         print(errors)
         print(boundaries)
 
-        # if boundaries == [False] * len(I):
-        #     raise Exception('\n[!]No current fulfilled boundary!\n')
+        if boundaries == [False] * len(I):
+            raise Exception('\n[!]No current fulfilled boundary!\n')
 
         min = math.inf
         min_indx = 0
+
         for indx, (e, b) in enumerate(zip(errors, boundaries)):
             # go through all currents, and check if they are the smalles given
             # that they fulfill the boundary
