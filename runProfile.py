@@ -2,7 +2,6 @@ import csv
 from ODE import ODE
 import numpy as np
 from scipy import signal
-from auxiliary import time_and_profile, new_population
 
 # record location
 # roadProfileLocation = '/net/projects/scratch/winter/valid_until_31_July_2020/hackathon/datasets/'
