@@ -7,7 +7,7 @@
 #
 ###############################################################################
 
-import os
+import os, time
 import numpy as np
 import matplotlib.pyplot as plt
 import ga
@@ -15,13 +15,13 @@ import ann
 from runProfile import calc_target
 
 # GA Hyperparams
-N_PARENTS = 4
-N_GENERATIONS = 200
-POPULATION_SIZE = 1
-MUTATION_RATE = 1e-3
+N_PARENTS = 40
+N_GENERATIONS = 20
+POPULATION_SIZE = 80
+MUTATION_RATE = 1e-2
 
 # ANN Hyperparams
-ann_params = dict(input_shape=8, output_shape=1, l1_size=150, l2_size=60)
+ann_params = dict(input_shape=8, output_shape=1, l1_size=100, l2_size=60)
 
 # Create initial random population of size POPULATION_SIZE
 population = [ann.create_init_params(**ann_params) for i in range(POPULATION_SIZE)]
@@ -30,20 +30,32 @@ datadir = 'datasets/preproc/'
 datasets = [
     # 'ts1_1_k_3.0.csv',
     'ts1_2_k_3.0.csv',
-    # 'ts1_3_k_3.0.csv',
-    # 'ts1_4_k_3.0.csv',
-    'ts2_k_20.0.csv',
+    'ts1_3_k_3.0.csv',
+    'ts1_4_k_3.0.csv',
+    # 'ts2_k_20.0.csv',
     # 'ts3_1_k_3.0.csv',
     # 'ts3_2_k_3.0.csv',
     # 'ts3_3_k_3.0.csv'
 ]
 
-velocities = np.arange(15, 25, 1)
+velocities = np.arange(20, 30, 2)
+
+print('\nStarted Neural Network optimization using Genetic Algorithm.\n')
+print('----------------------------')
+print('Parameters:')
+print('population size\t\t', POPULATION_SIZE)
+print('no. of parents\t\t', N_PARENTS)
+print('mutation rate\t\t', MUTATION_RATE)
+print('no. of generations\t', N_GENERATIONS)
+print('velocities\t\t', velocities)
+print('no. of datasets\t\t', len(datasets))
+print('----------------------------')
 
 # Optimize population
-avg_targets = []
+avg_targets, best_targets = [], []
 for generation in range(N_GENERATIONS):
-    print('%%%%%%%%%%%%%%%%%%%%')
+    start = time.time()
+    print('\n%%%%%%%%%%%%%%%%%%%%')
     print('%  Generation\t', generation)
     print('%%%%%%%%%%%%%%%%%%%%')
     # Loop through data
@@ -62,7 +74,7 @@ for generation in range(N_GENERATIONS):
                 individual_target = calc_target(
                     ann.network_function(individual), data, k)
                 targets_per_velocity[i] += individual_target
-                print('Target of Individual =', individual_target)
+                # print('Target of Individual =', individual_target)
         # Add average across all velocities
         targets_per_dataset += targets_per_velocity / len(velocities)
     # Add average across all datasets
@@ -76,12 +88,12 @@ for generation in range(N_GENERATIONS):
 
     # Compute stats
     avg_targets.append(sum(targets)/float(len(targets)))
-    print("Best\t", min(targets))
+    best_targets.append(min(targets))
+    print("Best\t", best_targets[-1])
     print("Worst\t", max(targets))
-    print("Average\t", avg_targets[-1])
+    print("Mean\t", avg_targets[-1])
+    print("Variance", np.var(targets))
     print()
-
-    print(population.shape)
 
     # Compute next generation
     parents = ga.select_mating_pool(population, targets, N_PARENTS)
@@ -93,10 +105,14 @@ for generation in range(N_GENERATIONS):
     population[N_PARENTS:] = offspring
 
     # Put back into matrix form
-    population = [ann.vec_to_mat(vec, **ann_params) for vec in population]
+    population = [ann.vec_to_mat(**ann_params, vec=vec) for vec in population]
+    print(f'Generation took {time.time()-start:.4f} seconds.')
 
 # Plot average target values
-plt.plot(avg_targets, c='black')
+plt.plot(avg_targets, c='red', label='average of population')
+plt.plot(best_targets, c='orange', label='best individual in population')
 plt.xlabel('Generation')
-plt.ylabel('Average Target Value')
-plt.xticks(np.arange(0, num_generations+1, 100), fontsize=15)
+plt.ylabel('Target Value')
+# plt.xticks(np.arange(0, N_GENERATIONS+1, 100))
+plt.legend()
+plt.show()
