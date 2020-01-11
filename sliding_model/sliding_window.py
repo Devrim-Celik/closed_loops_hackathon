@@ -119,6 +119,7 @@ def check_fittest(w, n, optimal_I, df, dt, slide_step, candidate_init_states, in
     print(indx_i)
     print(error_function(Zb_dtdt_list, dt, K=K))
     print(boundary_function(Zb_dtdt_list))
+    return True
 
 def generate_windows(df, vel, fn, w_length=2.5, slide_step=1, dt=0.005, K=3, I_levels=9):
     # TODO did not implement for higher slide_step than 1
@@ -196,6 +197,7 @@ def generate_windows(df, vel, fn, w_length=2.5, slide_step=1, dt=0.005, K=3, I_l
         pool = Pool(processes=cores - 1)
         pool.map(job, iterable)  # vel is the iterable parameter
         pool.close()
+        pool.join()
         print('Took {:.3f} seconds to process window.'.format(time_module.time() - start))
 
         print(errors)
