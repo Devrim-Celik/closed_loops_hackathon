@@ -12,7 +12,7 @@ def butter_bandpass(lowcut, highcut, fs, order):
     b, a = signal.butter(order, [low, high], btype='band')
     return b, a
 
-def error_function(Zb_dtdt, dt,  K=0.3):
+def error_function(Zb_dtdt, dt,  K=3):
     """
     Calculate error value. We want to minimize. Given by
         T = alpha_1 + K*alpha_2
@@ -61,10 +61,10 @@ def boundary_function(Zt_dtdt, Mb = 500, Mt = 50):
     else:
         return True
 
-
-def generate_windows(df, vel, fn, w_length=2.5, slide_step=1, dt=0.005, I_levels=9):
+def generate_windows(df, vel, fn, w_length=2.5, slide_step=1, dt=0.005, K=3, I_levels=9):
     #TODO did not implement for higher slide_step than 1
     """
+
     Function that generates multiple time windows for a given time series. Furthermore
     saves them as json files.
 
@@ -81,62 +81,98 @@ def generate_windows(df, vel, fn, w_length=2.5, slide_step=1, dt=0.005, I_levels
     dictionary = {}
     dictionary['vel'] = vel
     dictionary['fn'] = fn
-    dictionary['w_length'] = 2.5
-    dictionary['s_step'] = 1
-    dictionary['dt'] = 0.005
-    dictionary['I_levels'] = 9
+    dictionary['w_length'] = w_length
+    dictionary['s_step'] = slide_step
+    dictionary['dt'] = dt
+    dictionary['I_levels'] = I_levels
 
+    # initial state for the ODE
     initial_state = [0, 0, 0, 0]
+    # level of currents we are testint
     I = np.linspace(0, 2.0, I_levels)
-    # for saving the values
-    Best_I = np.zeros(len(df))
+    # for saving the values, -1 indicates unassigned
+    optimal_I = (-1)*np.ones(len(df))
+    # for saving the erros along the way
+    final_erros = np.zeros(len(df))
+    # total time steps steps
+    N = len(df) 
 
-    # w = number of window
-    print(len(df["time"]))
-    for w in range(2000, 2020): #<============================================================== THIS IS NOT CORRECT I THINK
-        print(w)
+    # steps per window
+    n = int(w_length/dt)
+    # beginning and end edge length is half the window
+    if n % 2 == 0:
+        k = int(n/2)
+    else:
+        k = int((n-1)/2)
+
+    # first index that is to be assigned by every window
+    to_be_assigned_indx = k+1
+
+    #TODO for now set edges zero:
+    optimal_I[:k] = 0
+    optimal_I[-k:] = 0
+
+    print("N={}, n={}, k={}, to_be_assigned_indx={}".format(N, n, k, to_be_assigned_indx))
+
+    # w indicates the start of every window, iterating by slide_step
+    for w in range(0, N-2*k, slide_step):
+        print("[*] Window [{:7d}] of [{:7d}].".format(w, int((N-2*k)/slide_step)))
+
         # for erros and boundary values of different currents
+        # candidate initial states so we can take over the ODE
         errors = [0]*len(I)
         boundaries = [False]*len(I)
-        # candidate initial states
         candidate_init_states = [None]*len(I)
-
-
-        # TODO do this using multiple threads in parallel
-        #with concurrent.futures.ThreadPoolExecutor(max_workers=len(I)) as executor:
-        #    executor.map(thread_I_fitness, I)
 
         # now go though every current and check which one is the fittest
         for indx_i, i in enumerate(I):
+            # for each current we reset those lists; they used to calculate
+            # loss and boundary condition
             Zb_dtdt_list = []
             Zt_dtdt_list = []
-            for indx_within in range(w, w + int(w_length/dt)):
-                # if this is the very first first step, use 0 are Zh_dt
+            # here you take steps through the window
+            for indx_within in range(w, w + n):
+                # if Best_I already is asigned (i.e. edge value), use this
+                # value instead of the candidate i
+                if optimal_I[indx_within] != -1:
+                    used_i = optimal_I[indx_within]
+                else:
+                    used_i = i
+                #print(used_i)
+                # if this is the very first first step, ts2_k_20.0.csvuse 0 as Zh_dt
                 if w == 0 and indx_within == 0:
                     Zh_dt = 0
                 # otherwise calculate it
                 else:
-                    Zh_dt = (df['profile'].iloc[w]-df['profile'].iloc[w-1])/dt
+                    Zh_dt = (df['profile'].iloc[indx_within]-df['profile'].iloc[indx_within-1])/dt
 
 
                 # if this is the first step of a window, use initial_state
-                # and safe the first step as the candidate for the initial
-                # state of the next window (only need the first four arguments)
                 if indx_within == w:
-                    x = ODE(*initial_state, df['profile'].iloc[w], Zh_dt, i, dt)
-                    candidate_init_states[indx_i] = x[:4]
+                    x = ODE(*initial_state, df['profile'].iloc[indx_within], Zh_dt,
+                        used_i, dt)
                 # otherwise the previous one
                 else:
-                    x = ODE(*x[:4], df['profile'].iloc[w], Zh_dt, i, dt)
+                    x = ODE(*x[:4], df['profile'].iloc[indx_within], Zh_dt, used_i, dt)
 
+                # from one of the candidate currents, we will need one
+                # paricular state as the initial state for the next window
+                # if the window indx is (slide_step-1) away from the start
+                # of the window, the resulting state will be saved
+                if indx_within == w + (slide_step-1):
+                    candidate_init_states[indx_i] = x[:4]
+
+                # append those for later error calculations
                 Zb_dtdt_list.append(x[4])
                 Zt_dtdt_list.append(x[5])
 
-            # TODO
-            errors[indx_i] = error_function(Zb_dtdt_list, dt)
+            # here we calculate error and boundary
+            errors[indx_i] = error_function(Zb_dtdt_list, dt, K=K)
             boundaries[indx_i] = boundary_function(Zb_dtdt_list)
 
-        # check if any does fulfill the boundary
+        print(errors)
+        print(boundaries)
+
         if boundaries == [False]*len(I):
             raise Exception('\n[!]No current fulfilled boundary!\n')
 
@@ -149,10 +185,12 @@ def generate_windows(df, vel, fn, w_length=2.5, slide_step=1, dt=0.005, I_levels
                 min = e
                 min_indx = indx
         # get the best current and the corresponding initial state
-        Best_I[w+1] = I[min_indx]
+        for ite in range(slide_step):
+            optimal_I[w+to_be_assigned_indx] = I[min_indx]
+            final_erros[w+to_be_assigned_indx] = min
         initial_state = candidate_init_states[min_indx]
 
-    return Best_I
+    return optimal_I, final_erros
 
 
 
