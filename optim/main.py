@@ -1,0 +1,102 @@
+###############################################################################
+#
+# Train a GA to optimize the weights of a neural network
+#
+# NOTE: this GA approach differs from others because it minimizes an objective
+#       value instead of maximizing fitness.
+#
+###############################################################################
+
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+import ga
+import ann
+from runProfile import calc_target
+
+# GA Hyperparams
+N_PARENTS = 4
+N_GENERATIONS = 200
+POPULATION_SIZE = 1
+MUTATION_RATE = 1e-3
+
+# ANN Hyperparams
+ann_params = dict(input_shape=8, output_shape=1, l1_size=150, l2_size=60)
+
+# Create initial random population of size POPULATION_SIZE
+population = [ann.create_init_params(**ann_params) for i in range(POPULATION_SIZE)]
+
+datadir = 'datasets/preproc/'
+datasets = [
+    # 'ts1_1_k_3.0.csv',
+    'ts1_2_k_3.0.csv',
+    # 'ts1_3_k_3.0.csv',
+    # 'ts1_4_k_3.0.csv',
+    'ts2_k_20.0.csv',
+    # 'ts3_1_k_3.0.csv',
+    # 'ts3_2_k_3.0.csv',
+    # 'ts3_3_k_3.0.csv'
+]
+
+velocities = np.arange(15, 25, 1)
+
+# Optimize population
+avg_targets = []
+for generation in range(N_GENERATIONS):
+    print('%%%%%%%%%%%%%%%%%%%%')
+    print('%  Generation\t', generation)
+    print('%%%%%%%%%%%%%%%%%%%%')
+    # Loop through data
+    targets_per_dataset = np.zeros(POPULATION_SIZE)
+    for dataset in datasets:
+        print('\nData:', dataset)
+        targets_per_velocity = np.zeros(POPULATION_SIZE)
+        for velocity in velocities:
+            print('Velocity =', velocity)
+            f = dataset.split('.')
+            k = float(f[0].split('_')[-1])
+            data = np.genfromtxt(datadir + f'{f[0]}.{f[1]}_vel_{velocity}.csv')
+                # '.'.join([f[0],f[1],f'vel_{velocity}',f[2]]))
+            for i, individual in enumerate(population):
+                # Calculate targets of individuals
+                individual_target = calc_target(
+                    ann.network_function(individual), data, k)
+                targets_per_velocity[i] += individual_target
+                print('Target of Individual =', individual_target)
+        # Add average across all velocities
+        targets_per_dataset += targets_per_velocity / len(velocities)
+    # Add average across all datasets
+    print()
+    targets = targets_per_dataset / len(datasets)
+    print('Individuals =', targets)
+
+    # Convert all individuals to vector instead of matrix
+    population = [ann.weights_to_vec(individual) for individual in population]
+    population = np.array(population)
+
+    # Compute stats
+    avg_targets.append(sum(targets)/float(len(targets)))
+    print("Best\t", min(targets))
+    print("Worst\t", max(targets))
+    print("Average\t", avg_targets[-1])
+    print()
+
+    print(population.shape)
+
+    # Compute next generation
+    parents = ga.select_mating_pool(population, targets, N_PARENTS)
+    offspring = ga.crossover(parents,
+        offspring_size=(population.shape[0] - parents.shape[0],
+                        population.shape[1]))
+    offspring = ga.mutate(offspring, MUTATION_RATE)
+    population[:N_PARENTS] = parents
+    population[N_PARENTS:] = offspring
+
+    # Put back into matrix form
+    population = [ann.vec_to_mat(vec, **ann_params) for vec in population]
+
+# Plot average target values
+plt.plot(avg_targets, c='black')
+plt.xlabel('Generation')
+plt.ylabel('Average Target Value')
+plt.xticks(np.arange(0, num_generations+1, 100), fontsize=15)
