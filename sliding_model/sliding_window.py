@@ -71,8 +71,7 @@ def boundary_function(Zt_dtdt, Mb=500, Mt=50):
         return True
 
 
-def check_fittest(w, n, optimal_I, df, dt, slide_step, candidate_init_states, initial_state, K, errors, boundaries,
-                  iter):
+def check_fittest(w, n, optimal_I, df, dt, slide_step, initial_state, K, iter):
     # for each current we reset those lists; they used to calculate
     # loss and boundary condition
     indx_i = iter[0]
@@ -120,6 +119,15 @@ def check_fittest(w, n, optimal_I, df, dt, slide_step, candidate_init_states, in
     # print(error_function(Zb_dtdt_list, dt, K=K))
     # print(boundary_function(Zb_dtdt_list))
     # return True
+
+
+def _init(err, bound, cand_init_states):
+    global errors
+    global boundaries
+    global candidate_init_states
+    errors = err
+    boundaries = bound
+    candidate_init_states = cand_init_states
 
 
 def generate_windows(df, vel, fn, w_length=2.5, slide_step=1, dt=0.005, K=3, I_levels=9):
@@ -192,9 +200,8 @@ def generate_windows(df, vel, fn, w_length=2.5, slide_step=1, dt=0.005, K=3, I_l
         # for indx_i, i in enumerate(I):
         iterable = [(indx, i) for indx, i in enumerate(I)]
         start = time_module.time()
-        job = partial(check_fittest, w, n, optimal_I, df, dt, slide_step, candidate_init_states, initial_state, K,
-                      errors, boundaries)
-        pool = Pool(processes=cores - 1)
+        job = partial(check_fittest, w, n, optimal_I, df, dt, slide_step, initial_state, K)
+        pool = Pool(processes=cores - 1, initializer=_init, initargs=(errors, boundaries, candidate_init_states))
         pool.map(job, iterable)
         pool.close()
         pool.join()  # wait until all jobs are finished to finish the pool of jobs
