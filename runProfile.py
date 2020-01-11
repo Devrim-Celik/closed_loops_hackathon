@@ -11,7 +11,7 @@ datasets = [
     'ts1_1_k_3.0.csv',
     'ts1_2_k_3.0.csv',
     'ts1_3_k_3.0.csv',
-    'ts1_4_k_3.0.csv'
+    'ts1_4_k_3.0.csv',
     'ts2_k_20.0.csv',
     'ts3_1_k_3.0.csv',
     'ts3_2_k_3.0.csv',
