@@ -194,7 +194,7 @@ def generate_windows(df, vel, fn, w_length=2.5, slide_step=1, dt=0.005, K=3, I_l
         # boundaries = [False] * len(I)
         boundaries = multiprocessing.Array('b', len(I), lock=False)
         # candidate_init_states = [None] * len(I)
-        candidate_init_states = multiprocessing.Array('d', len(I), lock=False)
+        candidate_init_states = multiprocessing.Array('f', len(I), lock=False)
 
         # now go though every current and check which one is the fittest
         # for indx_i, i in enumerate(I):
