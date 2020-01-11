@@ -12,6 +12,9 @@ from functools import partial
 
 cores = multiprocessing.cpu_count()
 
+# errors = []
+# boundaries = []
+# candidate_init_states = []
 
 def butter_bandpass(lowcut, highcut, fs, order):
     nyq = 0.5 * fs
@@ -191,10 +194,13 @@ def generate_windows(df, vel, fn, w_length=2.5, slide_step=1, dt=0.005, K=3, I_l
         # candidate initial states so we can take over the ODE
         # errors = [0] * len(I)
         errors = multiprocessing.Array('f', len(I), lock=False)
+        print(type(errors))
         # boundaries = [False] * len(I)
         boundaries = multiprocessing.Array('b', len(I), lock=False)
+        print(type(boundaries))
         # candidate_init_states = [None] * len(I)
         candidate_init_states = multiprocessing.Array('f', len(I), lock=False)
+        print(type(candidate_init_states))
 
         # now go though every current and check which one is the fittest
         # for indx_i, i in enumerate(I):
