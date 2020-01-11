@@ -208,7 +208,7 @@ def generate_windows(df, vel, fn, w_length=2.5, slide_step=1, dt=0.005, K=3, I_l
         #     raise Exception('\n[!]No current fulfilled boundary!\n')
 
         min = math.inf
-
+        min_indx = 0
         for indx, (e, b) in enumerate(zip(errors, boundaries)):
             # go through all currents, and check if they are the smalles given
             # that they fulfill the boundary
