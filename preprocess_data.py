@@ -33,7 +33,7 @@ def thread_job(iter):
 for dataset in datasets:
     threads = list()
     iterable = [(dataset, vel) for vel in velocities]
-    with Pool(processes=cores) as pool:
+    with Pool(processes=cores-2) as pool:
         pool.map(thread_job, iterable)  # vel is the iterable parameter
-        pool.close()
-        pool.join()
+        # pool.close()
+        # pool.join()
