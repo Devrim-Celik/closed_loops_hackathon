@@ -6,15 +6,11 @@ from ode import ODE
 from scipy import signal
 
 import time as time_module
-from multiprocessing.pool import Pool
-import multiprocessing
+from multiprocessing import Pool, Manager, Array, Value, cpu_count
 from functools import partial
 
-cores = multiprocessing.cpu_count()
+cores = cpu_count()
 
-# errors = []
-# boundaries = []
-# candidate_init_states = []
 
 def butter_bandpass(lowcut, highcut, fs, order):
     nyq = 0.5 * fs
@@ -118,19 +114,6 @@ def check_fittest(w, n, optimal_I, df, dt, slide_step, initial_state, K, iter):
     # here we calculate error and boundary
     errors[indx_i] = error_function(Zb_dtdt_list, dt, K=K)
     boundaries[indx_i] = boundary_function(Zb_dtdt_list)
-    # print(indx_i)
-    # print(error_function(Zb_dtdt_list, dt, K=K))
-    # print(boundary_function(Zb_dtdt_list))
-    # return True
-
-
-def _init(err, bound, cand_init_states):
-    global errors
-    global boundaries
-    global candidate_init_states
-    errors = err
-    boundaries = bound
-    candidate_init_states = cand_init_states
 
 
 def generate_windows(df, vel, fn, w_length=2.5, slide_step=1, dt=0.005, K=3, I_levels=9):
@@ -189,50 +172,50 @@ def generate_windows(df, vel, fn, w_length=2.5, slide_step=1, dt=0.005, K=3, I_l
     # w indicates the start of every window, iterating by slide_step
     for w in range(0, N - 2 * k, slide_step):
         print("[*] Window [{:7d}] of [{:7d}].".format(w, int((N - 2 * k) / slide_step)))
+        with Manager() as manager:
+            # for errors and boundary values of different currents
+            # candidate initial states so we can take over the ODE
+            # errors = [0] * len(I)
+            errors = manager.list(len(I))
+            print(type(errors))
+            # boundaries = [False] * len(I)
+            boundaries = Array('b', len(I), lock=False)
+            print(type(boundaries))
+            # candidate_init_states = [None] * len(I)
+            candidate_init_states = manager.list(len(I))
+            print(type(candidate_init_states))
 
-        # for errors and boundary values of different currents
-        # candidate initial states so we can take over the ODE
-        # errors = [0] * len(I)
-        errors = multiprocessing.Array('f', len(I), lock=False)
-        print(type(errors))
-        # boundaries = [False] * len(I)
-        boundaries = multiprocessing.Array('b', len(I), lock=False)
-        print(type(boundaries))
-        # candidate_init_states = [None] * len(I)
-        candidate_init_states = multiprocessing.Array('f', len(I), lock=False)
-        print(type(candidate_init_states))
+            # now go though every current and check which one is the fittest
+            # for indx_i, i in enumerate(I):
+            iterable = [(indx, i) for indx, i in enumerate(I)]
+            start = time_module.time()
+            job = partial(check_fittest, w, n, optimal_I, df, dt, slide_step, initial_state, K)
+            pool = Pool(processes=cores - 1, initargs=(errors, boundaries, candidate_init_states))
+            pool.map(job, iterable)
+            pool.close()
+            pool.join()  # wait until all jobs are finished to finish the pool of jobs
+            print('Took {:.3f} seconds to process window.'.format(time_module.time() - start))
 
-        # now go though every current and check which one is the fittest
-        # for indx_i, i in enumerate(I):
-        iterable = [(indx, i) for indx, i in enumerate(I)]
-        start = time_module.time()
-        job = partial(check_fittest, w, n, optimal_I, df, dt, slide_step, initial_state, K)
-        pool = Pool(processes=cores - 1, initializer=_init, initargs=(errors, boundaries, candidate_init_states))
-        pool.map(job, iterable)
-        pool.close()
-        pool.join()  # wait until all jobs are finished to finish the pool of jobs
-        print('Took {:.3f} seconds to process window.'.format(time_module.time() - start))
+            print(errors)
+            print(boundaries)
 
-        print(errors)
-        print(boundaries)
+            if boundaries == [False] * len(I):
+                raise Exception('\n[!]No current fulfilled boundary!\n')
 
-        if boundaries == [False] * len(I):
-            raise Exception('\n[!]No current fulfilled boundary!\n')
+            min = math.inf
+            min_indx = 0
 
-        min = math.inf
-        min_indx = 0
-
-        for indx, (e, b) in enumerate(zip(errors, boundaries)):
-            # go through all currents, and check if they are the smalles given
-            # that they fulfill the boundary
-            if b and e < min:
-                min = e
-                min_indx = indx
-        # get the best current and the corresponding initial state
-        for ite in range(slide_step):
-            optimal_I[w + to_be_assigned_indx] = I[min_indx]
-            final_erros[w + to_be_assigned_indx] = min
-        initial_state = candidate_init_states[min_indx]
+            for indx, (e, b) in enumerate(zip(errors, boundaries)):
+                # go through all currents, and check if they are the smalles given
+                # that they fulfill the boundary
+                if b and e < min:
+                    min = e
+                    min_indx = indx
+            # get the best current and the corresponding initial state
+            for ite in range(slide_step):
+                optimal_I[w + to_be_assigned_indx] = I[min_indx]
+                final_erros[w + to_be_assigned_indx] = min
+            initial_state = candidate_init_states[min_indx]
 
     return optimal_I, final_erros
 
