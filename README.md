@@ -2,10 +2,10 @@
 
 Group Name: Loopsters Mejores
 Group Members: Pascal Schröder, Marc Vidal De Palol, Devrim Celik  
-Timeframe: $3$ days (10.10.2020 - 12.10.2020)  
+Timeframe: 3 days (10.10.2020 - 12.10.2020)  
 
 ## Abstract
-This is the github repository of the *Loopsters Mejores*. Our idea revolves generating an "optimal current $I_O$" which is then used to train an LSTM, effectively avoiding the problem of propagating gradients through the dynamical system. 
+This is the github repository of the *Loopsters Mejores*. Our idea revolves generating an "optimal current" which is then used to train an LSTM, effectively avoiding the problem of propagating gradients through the dynamical system. 
 
 ## Repositoy
 + ```visualization```: Containg a notebook for visualization.
