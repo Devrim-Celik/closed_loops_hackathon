@@ -106,7 +106,7 @@ for generation in range(N_GENERATIONS):
                 print('Velocity =', velocity)
                 f = dataset.split('.')
                 k = float(f[0].split('_')[-1])
-                data = np.genfromtxt(datadir + f'{f[0]}.{f[1]}_vel_{velocity}.csv')
+                data = np.genfromtxt(datadir + '{}.{}_vel_{}.csv'.format(f[0], f[1], velocity))
                     # '.'.join([f[0],f[1],f'vel_{velocity}',f[2]]))
                 for i, individual in enumerate(population):
                     # Calculate targets of individuals
@@ -145,7 +145,8 @@ for generation in range(N_GENERATIONS):
 
     # Put back into matrix form
     population = [ann.vec_to_mat(**ann_params, vec=vec) for vec in population]
-    print(f'Generation took {time.time()-start:.4f} seconds.')
+    time_passed = time.time()-start
+    print('Generation took {0:.4f} seconds.'.format(time_passed))
 
 # Plot average target values
 plt.plot(avg_targets, c='red', label='average of population')
