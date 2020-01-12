@@ -20,4 +20,4 @@ for dataset in datasets:
     pool = Pool(processes=cores)
     pool.map(thread_job, iterable)
     pool.close()
-    print(f'Took {time_module.time() - start:.3f} seconds to process dataset.')
+    print('Took {0:.3f} seconds to process dataset.'.format(time_module.time() - start))

@@ -15,7 +15,7 @@ def run(datadir, dataset, win_size, plot=False, save=False):
 
     state = [0, 0, 0, 0, 0, 0] # initial state
     N = len(profile) # length of profilef
-    possible_Is = np.array([0.,.1,.2,.3,.4,.5,.6,.7,.8,.9,1.,1.2,1.4,1.6,1.8])
+    possible_Is = np.array([0.,.05,.1,.15,.2,.25,.3,.4,.5,.6,.9,1.2,1.5,1.8])
     optimal_I = np.zeros(N)
 
     best_targets = []
@@ -57,7 +57,7 @@ def run(datadir, dataset, win_size, plot=False, save=False):
     if save:
         import csv
         fname = dataset[:-4]
-        fname = f'optimal_I_{fname}_wsize_{win_size}_err_{optimal_I_error:.7f}.csv'
+        fname = 'optimal_I_{0}_wsize_{1}_err_{2:.7f}.csv'.format(fname, win_size, optimal_I_error)
         with open("datasets/labels/"+fname, mode='w') as file:
             writer = csv.writer(file, delimiter=',')
             for i in optimal_I:
