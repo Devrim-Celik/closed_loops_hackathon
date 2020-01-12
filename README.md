@@ -1,6 +1,6 @@
 # AI 4 Closed-Loop Control Systems - ZF
 
-Group Name: Loopsters Mejores
+Group Name: Loopsters Mejores  
 Group Members: Pascal Schröder, Marc Vidal De Palol, Devrim Celik  
 Timeframe: 3 days (10.10.2020 - 12.10.2020)  
 

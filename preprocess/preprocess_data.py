@@ -9,17 +9,20 @@ cores = multiprocessing.cpu_count()
 
 profileLocation = 'datasets/'
 # profile filenames
-datasets = [
-    'ts1_1_k_3.0.csv',
-    'ts1_2_k_3.0.csv',
-    'ts1_3_k_3.0.csv',
-    'ts1_4_k_3.0.csv',
-    'ts2_k_20.0.csv',
-    'ts3_1_k_3.0.csv',
-    'ts3_2_k_3.0.csv',
-    'ts3_3_k_3.0.csv'
-]
-velocities = [i for i in range(5, 31)]  # loop over all velocities
+# datasets = [
+#     'ts1_1_k_3.0.csv',
+#     'ts1_2_k_3.0.csv',
+#     'ts1_3_k_3.0.csv',
+#     'ts1_4_k_3.0.csv',
+#     'ts2_k_20.0.csv',
+#     'ts3_1_k_3.0.csv',
+#     'ts3_2_k_3.0.csv',
+#     'ts3_3_k_3.0.csv'
+# ]
+# velocities = [i for i in range(5, 31)]  # loop over all velocities
+
+datasets = ['ts4_k_20.0.csv']
+velocities = [8.3, 13.8, 19.4, 27.7]
 
 
 def thread_job(iter):
@@ -27,7 +30,7 @@ def thread_job(iter):
     vel = iter[1]
     print('… velocity', vel)
     time, profile = time_and_profile(profileLocation + fname, vel)
-    with open(profileLocation + "preproc2/" + fname[:-4] + "_" + str(vel) + ".csv", mode='w') as file:
+    with open(profileLocation + "final_preproc/" + fname[:-4] + "_vel_" + str(vel) + ".csv", mode='w') as file:
         writer = csv.writer(file, delimiter=',')
         for p in profile:
             writer.writerow([p])

@@ -45,9 +45,10 @@ def run(datadir, dataset, win_size, plot=False, save=False):
 
     # Test optimal_I against constants
     optimal_I_error = calc_target([0,0,0,0,0,0], profile, optimal_I, K)[0]
-    # print('Optimal I target:', optimal_I_error)
-    # for i in possible_Is:
-    #     print(f'Const {i:.3f} target:', calc_target([0,0,0,0,0,0], profile, i, K)[0])
+    print('Dataset {} optimal I target: {}'.format(dataset, optimal_I_error))
+    for i in possible_Is:
+        const_target = calc_target([0,0,0,0,0,0], profile, i, K)[0]
+        print('Dataset {0} Const {1:.3f} target: {2}'.format(dataset, i, const_target))
 
     if plot:
         plt.plot(profile*100)
