@@ -11,11 +11,11 @@ def create_init_params(input_shape, l1_size, l2_size, output_shape):
     Create inital parameters for the network.
     '''
     in_weights = np.random.uniform(
-        low=-0.1, high=0.1, size=(input_shape, l1_size))
+        low=-1., high=1., size=(input_shape, l1_size))
     l1_weights = np.random.uniform(
-        low=-0.1, high=0.1, size=(l1_size, l2_size))
+        low=-1., high=1., size=(l1_size, l2_size))
     l2_weights = np.random.uniform(
-        low=-0.1, high=0.1, size=(l2_size, output_shape))
+        low=-1., high=1., size=(l2_size, output_shape))
     return [in_weights, l1_weights, l2_weights]
 
 def sigmoid(inpt):
