@@ -14,6 +14,7 @@ import ga
 import ann
 from runProfile import calc_target
 from multiprocessing import Pool, cpu_count
+import csv
 
 cores = cpu_count()
 
@@ -147,6 +148,13 @@ for generation in range(N_GENERATIONS):
     population = [ann.vec_to_mat(**ann_params, vec=vec) for vec in population]
     time_passed = time.time()-start
     print('Generation took {0:.4f} seconds.'.format(time_passed))
+
+    # Save population to disk
+    with open("ga_population.csv", mode='w') as file:
+        writer = csv.writer(file, delimiter=',')
+        for i in population:
+            writer.writerow([i])
+
 
 # Plot average target values
 plt.plot(avg_targets, c='red', label='average of population')
