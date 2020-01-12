@@ -16,7 +16,7 @@ def thread_job(iter):
     run(datadir, dataset=iter[0], win_size=iter[1], save=True, plot=False)
     print('Finished win_size {}'.format(iter[1]))
 
-for dataset in datasets[:2]:
+for dataset in datasets[2:]:
     print('\n%% Processing dataset', dataset)
     start = time_module.time()
     iterable = [(dataset, win_size) for win_size in window_sizes]
