@@ -7,19 +7,17 @@ import numpy as np
 cores = cpu_count()
 
 datadir = 'datasets/preproc/'
-datasets = os.listdir(datadir)
-velocities = np.arange(5, 31, 1)
+datasets = sorted(os.listdir(datadir))
 window_sizes = [50, 100, 250, 500, 1000, 2500, 5000]
 
 def thread_job(iter):
-    for window_size in window_sizes:
-        run(datadir, dataset=iter[0], velocity=iter[1], win_size=window_size, save=True, plot=False)
+    run(datadir, dataset=iter[0], win_size=iter[1], save=True, plot=False)
 
 for dataset in datasets:
-    print('\n\n\n%% Processing dataset', dataset)
+    print('\n%% Processing dataset', dataset)
     start = time_module.time()
-    iterable = [(dataset, vel) for vel in velocities]
+    iterable = [(dataset, win_size) for win_size in window_sizes]
     pool = Pool(processes=cores)
     pool.map(thread_job, iterable)
     pool.close()
-    print(f'\n\n\nTook {time_module.time() - start:.3f} seconds to process dataset.\n\n\n')
+    print(f'Took {time_module.time() - start:.3f} seconds to process dataset.')
