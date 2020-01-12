@@ -2,25 +2,26 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from runProfile import calc_target
-import sys, argparse
+import sys, argparse, time
 
 
-def run(datadir, dataset, velocity=20, win_size=500, plot=False, save=False):
+def run(datadir, dataset, win_size, plot=False, save=False):
+
+    print('Computing {} with window size {}'.format(dataset, win_size))
 
     # Read the data
     K = float(dataset.split('.')[0][-1])
     profile = np.genfromtxt(datadir + dataset)
 
     state = [0, 0, 0, 0, 0, 0] # initial state
-    N = len(profile) # length of profile
-    w_size = win_size # size of the window
+    N = len(profile) # length of profilef
     possible_Is = np.array([0.,.1,.2,.3,.4,.5,.6,.7,.8,.9,1.,1.2,1.4,1.6,1.8])
     optimal_I = np.zeros(N)
 
     best_targets = []
-    for idx in range(0, N, w_size):
+    for idx in range(0, N, win_size):
 
-        w_start, w_end = idx, idx+w_size
+        w_start, w_end = idx, idx+win_size
         if w_end > N:
             break
 
@@ -33,21 +34,20 @@ def run(datadir, dataset, velocity=20, win_size=500, plot=False, save=False):
             targets.append(target)
             states.append(next_state)
 
-        print(targets)
+        # print(targets)
         best_targets.append(min(targets))
         min_target_index = targets.index(min(targets))
         state = states[min_target_index]
         optimal_I[w_start:w_end] = possible_Is[min_target_index]
 
-    print('\nBest targets', best_targets)
+    # print('\nBest targets', best_targets)
     # print('Average target', sum(best_targets)/idx)
 
     # Test optimal_I against constants
-    print()
     optimal_I_error = calc_target([0,0,0,0,0,0], profile, optimal_I, K)[0]
-    print('Optimal I target:', optimal_I_error)
-    for i in possible_Is:
-        print(f'Const {i:.3f} target:', calc_target([0,0,0,0,0,0], profile, i, K)[0])
+    # print('Optimal I target:', optimal_I_error)
+    # for i in possible_Is:
+    #     print(f'Const {i:.3f} target:', calc_target([0,0,0,0,0,0], profile, i, K)[0])
 
     if plot:
         plt.plot(profile*100)
@@ -56,8 +56,8 @@ def run(datadir, dataset, velocity=20, win_size=500, plot=False, save=False):
 
     if save:
         import csv
-        fname = dataset.split('.')[0]
-        fname = f'optimal_I_{fname}_vel_{velocity}_wsize_{w_size}_err_{optimal_I_error:.7f}.csv'
+        fname = dataset[:-4]
+        fname = f'optimal_I_{fname}_wsize_{win_size}_err_{optimal_I_error:.7f}.csv'
         with open("datasets/labels/"+fname, mode='w') as file:
             writer = csv.writer(file, delimiter=',')
             for i in optimal_I:
@@ -78,13 +78,11 @@ def run(datadir, dataset, velocity=20, win_size=500, plot=False, save=False):
 
 if __name__ == '__main__':
 
-
     datadir = 'datasets/preproc/'
-    dataset = 'ts3_2_k_3.0.csv'
-    velocity = 5
-    win_size = 5000
-    save = True
+    dataset = 'ts1_3_k_3.0_vel_5.csv'
+    win_size = 500
+    save = False
 
-    run(datadir, dataset, velocity, win_size, save=save)
+    run(datadir, dataset, win_size, save=save)
 
     sys.exit()
