@@ -11,6 +11,7 @@ This is the github repository of the *Loopsters Mejores*. Our idea revolves gene
 + ```visualization```: Containg a notebook for visualization.
 + ```gann```: An earlier approach to the problem in which we used genetic algorithms for training a neural network controller. Sadly it took to long with no hope of good performance, but it is fully functional.
 + ```preprocess```: Responsible for decreasing file size of the original dataset and transforming them using different velocities.
++ ```ann_controller```: Here lies our controller: A lstm that was trained on the results of the sliding window model.
 + ```simulation```: Containing our own simulation script using ```odeint``` for speeding up the dynamical systems. Also created an animation.
-+ ```sliding_model```: Containing the sliding model, responsible for calculating $I_O$.
++ ```sliding_model```: Containing the sliding model, responsible for calculating the "optimal" current.
 + ```task```: Task related files and information.
