@@ -8,15 +8,13 @@ cores = cpu_count()
 
 datadir = 'datasets/final_preproc/'
 datasets = sorted(os.listdir(datadir))
-# window_sizes = [50, 100, 120, 150, 170, 250, 500, 750, 1000, 1750, 2500]
-# window_sizes = [200, 500, 1000, 1500]
-window_sizes = [1750, 2000, 2250, 2500]
+window_sizes = [50, 100, 120, 150, 170, 250, 500, 750, 1000, 1750, 2500]
 
 def thread_job(iter):
     run(datadir, dataset=iter[0], win_size=iter[1], save=True, plot=False)
     print('Finished win_size {}'.format(iter[1]))
 
-for dataset in datasets[:2]:
+for dataset in datasets:
     print('\n%% Processing dataset', dataset)
     start = time_module.time()
     iterable = [(dataset, win_size) for win_size in window_sizes]
